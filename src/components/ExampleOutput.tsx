@@ -6,6 +6,7 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { CheckCircle2, XCircle, AlertTriangle, Lightbulb, TrendingUp } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 export function ExampleOutput() {
   const { language, t } = useLanguage();
@@ -88,8 +89,13 @@ export function ExampleOutput() {
   const data = exampleData[language];
 
   return (
-    <div className="glass-card rounded-xl overflow-hidden">
-      <div className="bg-muted/50 px-6 py-4 border-b border-border">
+    <motion.div 
+      className="metal-card overflow-hidden"
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+    >
+      <div className="bg-gradient-to-r from-muted/80 to-muted/40 px-6 py-4 border-b border-border/50">
         <p className="text-sm text-muted-foreground">
           <span className="font-medium text-foreground">{t('productIdeaLabel')}</span>{' '}
           {data.idea}
@@ -98,10 +104,12 @@ export function ExampleOutput() {
 
       <Accordion type="single" collapsible className="w-full">
         {/* Reality Check */}
-        <AccordionItem value="reality-check" className="border-b border-border/50">
-          <AccordionTrigger className="px-6 py-4 hover:no-underline hover:bg-muted/30">
+        <AccordionItem value="reality-check" className="border-b border-border/30">
+          <AccordionTrigger className="px-6 py-4 hover:no-underline hover:bg-muted/20 transition-colors">
             <div className="flex items-center gap-3">
-              <AlertTriangle className="h-5 w-5 text-warning" />
+              <div className="w-8 h-8 rounded-lg bg-warning/10 flex items-center justify-center">
+                <AlertTriangle className="h-4 w-4 text-warning" />
+              </div>
               <span className="font-semibold">{t('realityCheck')}</span>
             </div>
           </AccordionTrigger>
@@ -109,7 +117,7 @@ export function ExampleOutput() {
             <div className="space-y-4">
               <p className="text-sm text-muted-foreground">{data.realityCheck.summary}</p>
               
-              <div>
+              <div className="glass-card p-4">
                 <h4 className="text-sm font-medium mb-2">{t('assumptions')}</h4>
                 <ul className="space-y-1.5">
                   {data.realityCheck.assumptions.map((item, i) => (
@@ -121,7 +129,7 @@ export function ExampleOutput() {
                 </ul>
               </div>
 
-              <div>
+              <div className="glass-card p-4">
                 <h4 className="text-sm font-medium mb-2">{t('risks')}</h4>
                 <ul className="space-y-1.5">
                   {data.realityCheck.risks.map((item, i) => (
@@ -133,19 +141,21 @@ export function ExampleOutput() {
                 </ul>
               </div>
 
-              <div>
-                <h4 className="text-sm font-medium mb-2">{t('likelyFailure')}</h4>
-                <p className="text-sm text-destructive/80">{data.realityCheck.likelyFailure}</p>
+              <div className="p-3 rounded-lg bg-destructive/5 border border-destructive/20">
+                <h4 className="text-sm font-medium mb-1.5 text-destructive">{t('likelyFailure')}</h4>
+                <p className="text-sm text-muted-foreground">{data.realityCheck.likelyFailure}</p>
               </div>
             </div>
           </AccordionContent>
         </AccordionItem>
 
         {/* Score */}
-        <AccordionItem value="score" className="border-b border-border/50">
-          <AccordionTrigger className="px-6 py-4 hover:no-underline hover:bg-muted/30">
+        <AccordionItem value="score" className="border-b border-border/30">
+          <AccordionTrigger className="px-6 py-4 hover:no-underline hover:bg-muted/20 transition-colors">
             <div className="flex items-center gap-3">
-              <TrendingUp className="h-5 w-5 text-score" />
+              <div className="w-8 h-8 rounded-lg bg-score/10 flex items-center justify-center">
+                <TrendingUp className="h-4 w-4 text-score" />
+              </div>
               <span className="font-semibold">{t('productThinkingScore')}</span>
               <span className="score-badge ml-2">{data.score.score}/10</span>
             </div>
@@ -154,7 +164,7 @@ export function ExampleOutput() {
             <div className="space-y-4">
               <p className="text-sm">
                 <span className="font-medium">{t('level')}:</span>{' '}
-                <span className="text-muted-foreground">{data.score.level}</span>
+                <span className="text-muted-foreground px-2 py-0.5 rounded-md bg-muted">{data.score.level}</span>
               </p>
               
               <div>
@@ -173,31 +183,33 @@ export function ExampleOutput() {
         </AccordionItem>
 
         {/* Improvement Plan */}
-        <AccordionItem value="improvement" className="border-b border-border/50">
-          <AccordionTrigger className="px-6 py-4 hover:no-underline hover:bg-muted/30">
+        <AccordionItem value="improvement" className="border-b border-border/30">
+          <AccordionTrigger className="px-6 py-4 hover:no-underline hover:bg-muted/20 transition-colors">
             <div className="flex items-center gap-3">
-              <Lightbulb className="h-5 w-5 text-primary" />
+              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Lightbulb className="h-4 w-4 text-primary" />
+              </div>
               <span className="font-semibold">{t('improvementPlan')}</span>
             </div>
           </AccordionTrigger>
           <AccordionContent className="px-6 pb-4 pt-0">
             <div className="space-y-3">
-              <div className="flex items-start gap-3 p-3 rounded-lg bg-accent/50">
-                <span className="text-xs font-bold text-primary bg-primary/10 px-2 py-1 rounded">1</span>
+              <div className="flex items-start gap-3 p-3 rounded-lg glass-card">
+                <span className="text-xs font-bold text-primary-foreground metal-button w-6 h-6 flex items-center justify-center rounded-md">1</span>
                 <div>
                   <p className="text-sm font-medium">{t('improveOneThing')}</p>
                   <p className="text-sm text-muted-foreground">{data.improvement.improve}</p>
                 </div>
               </div>
-              <div className="flex items-start gap-3 p-3 rounded-lg bg-accent/50">
-                <span className="text-xs font-bold text-primary bg-primary/10 px-2 py-1 rounded">2</span>
+              <div className="flex items-start gap-3 p-3 rounded-lg glass-card">
+                <span className="text-xs font-bold text-primary-foreground metal-button w-6 h-6 flex items-center justify-center rounded-md">2</span>
                 <div>
                   <p className="text-sm font-medium">{t('validateAssumption')}</p>
                   <p className="text-sm text-muted-foreground">{data.improvement.validate}</p>
                 </div>
               </div>
-              <div className="flex items-start gap-3 p-3 rounded-lg bg-accent/50">
-                <span className="text-xs font-bold text-primary bg-primary/10 px-2 py-1 rounded">3</span>
+              <div className="flex items-start gap-3 p-3 rounded-lg glass-card">
+                <span className="text-xs font-bold text-primary-foreground metal-button w-6 h-6 flex items-center justify-center rounded-md">3</span>
                 <div>
                   <p className="text-sm font-medium">{t('runExperiment')}</p>
                   <p className="text-sm text-muted-foreground">{data.improvement.experiment}</p>
@@ -216,18 +228,22 @@ export function ExampleOutput() {
 
         {/* Final Verdict */}
         <AccordionItem value="verdict" className="border-none">
-          <AccordionTrigger className="px-6 py-4 hover:no-underline hover:bg-muted/30">
+          <AccordionTrigger className="px-6 py-4 hover:no-underline hover:bg-muted/20 transition-colors">
             <div className="flex items-center gap-3">
-              {data.verdict.worth ? (
-                <CheckCircle2 className="h-5 w-5 text-success" />
-              ) : (
-                <XCircle className="h-5 w-5 text-destructive" />
-              )}
+              <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                data.verdict.worth ? 'bg-success/10' : 'bg-destructive/10'
+              }`}>
+                {data.verdict.worth ? (
+                  <CheckCircle2 className="h-4 w-4 text-success" />
+                ) : (
+                  <XCircle className="h-4 w-4 text-destructive" />
+                )}
+              </div>
               <span className="font-semibold">{t('finalVerdict')}</span>
-              <span className={`text-xs font-medium px-2 py-1 rounded-full ${
+              <span className={`text-xs font-medium px-3 py-1 rounded-full border ${
                 data.verdict.worth 
-                  ? 'bg-success/10 text-success' 
-                  : 'bg-destructive/10 text-destructive'
+                  ? 'bg-success/10 text-success border-success/20' 
+                  : 'bg-destructive/10 text-destructive border-destructive/20'
               }`}>
                 {data.verdict.worth ? t('worthTesting') : t('notWorthTesting')}
               </span>
@@ -238,6 +254,6 @@ export function ExampleOutput() {
           </AccordionContent>
         </AccordionItem>
       </Accordion>
-    </div>
+    </motion.div>
   );
 }
