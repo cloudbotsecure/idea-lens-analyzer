@@ -79,6 +79,15 @@ export const translations = {
     runExperiment: "Run one experiment",
     dontBuildYet: "Don't build yet",
     
+    // Market research
+    marketResearch: "Market Research",
+    competitors: "Competitor Insights",
+    similarProducts: "Similar Products on Product Hunt",
+    marketAnalysis: "Market Analysis",
+    votes: "votes",
+    noCompetitors: "No competitor data found",
+    noSimilarProducts: "No similar products found",
+    
     // Levels
     beginner: "Beginner",
     intermediate: "Intermediate",
@@ -169,6 +178,15 @@ export const translations = {
     validateAssumption: "Перевірте одне припущення",
     runExperiment: "Проведіть один експеримент",
     dontBuildYet: "Поки не будуйте",
+    
+    // Market research
+    marketResearch: "Ринкове дослідження",
+    competitors: "Інсайти про конкурентів",
+    similarProducts: "Схожі продукти на Product Hunt",
+    marketAnalysis: "Аналіз ринку",
+    votes: "голосів",
+    noCompetitors: "Дані про конкурентів не знайдено",
+    noSimilarProducts: "Схожі продукти не знайдено",
     
     // Levels
     beginner: "Початківець",
