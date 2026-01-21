@@ -2,7 +2,10 @@ import { useRef } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { AnalysisOutput } from '@/lib/types';
 import { Button } from '@/components/ui/button';
-import { CheckCircle2, XCircle, AlertTriangle, Lightbulb, TrendingUp, Copy, Link as LinkIcon, RotateCcw, Download } from 'lucide-react';
+import { 
+  CheckCircle2, XCircle, AlertTriangle, Lightbulb, TrendingUp, 
+  Copy, Link as LinkIcon, RotateCcw, Download, Globe, Rocket, ExternalLink 
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -137,6 +140,88 @@ export function ResultsDisplay({ output, reportId, onReset, readOnly }: ResultsD
             <p className="text-sm text-muted-foreground">{output.reality_check.likely_failure_first}</p>
           </div>
         </motion.div>
+
+        {/* Market Research */}
+        {output.market_research && (
+          <motion.div variants={fadeInUp} className="metal-card p-6">
+            <div className="flex items-center gap-3 mb-5">
+              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                <Globe className="h-5 w-5 text-primary" />
+              </div>
+              <h2 className="text-xl font-bold">{t('marketResearch')}</h2>
+            </div>
+            
+            {/* Market Analysis Summary */}
+            {output.market_research.market_analysis && (
+              <p className="text-muted-foreground mb-5 p-4 rounded-xl glass-card">
+                {output.market_research.market_analysis}
+              </p>
+            )}
+            
+            <div className="grid md:grid-cols-2 gap-5">
+              {/* Competitors */}
+              <div className="glass-card p-4">
+                <h4 className="font-medium mb-3 text-sm uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                  <Globe className="h-4 w-4" />
+                  {t('competitors')}
+                </h4>
+                {output.market_research.competitors.length > 0 ? (
+                  <ul className="space-y-3">
+                    {output.market_research.competitors.map((c, i) => (
+                      <li key={i} className="text-sm">
+                        <a 
+                          href={c.url} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="font-medium text-primary hover:underline flex items-center gap-1"
+                        >
+                          {c.name}
+                          <ExternalLink className="h-3 w-3" />
+                        </a>
+                        <p className="text-muted-foreground text-xs mt-0.5 line-clamp-2">{c.summary}</p>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-sm text-muted-foreground italic">{t('noCompetitors')}</p>
+                )}
+              </div>
+              
+              {/* Similar Products from Product Hunt */}
+              <div className="glass-card p-4">
+                <h4 className="font-medium mb-3 text-sm uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                  <Rocket className="h-4 w-4" />
+                  {t('similarProducts')}
+                </h4>
+                {output.market_research.similar_products.length > 0 ? (
+                  <ul className="space-y-3">
+                    {output.market_research.similar_products.map((p, i) => (
+                      <li key={i} className="text-sm">
+                        <div className="flex items-center justify-between">
+                          <a 
+                            href={p.url} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="font-medium text-primary hover:underline flex items-center gap-1"
+                          >
+                            {p.name}
+                            <ExternalLink className="h-3 w-3" />
+                          </a>
+                          <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                            {p.votesCount} {t('votes')}
+                          </span>
+                        </div>
+                        <p className="text-muted-foreground text-xs mt-0.5">{p.tagline}</p>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-sm text-muted-foreground italic">{t('noSimilarProducts')}</p>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        )}
 
         {/* Score */}
         <motion.div variants={fadeInUp} className="metal-card p-6">

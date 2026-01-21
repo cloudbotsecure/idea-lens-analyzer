@@ -31,11 +31,35 @@ export interface FinalVerdict {
   reason: string;
 }
 
+export interface CompetitorInsight {
+  name: string;
+  url: string;
+  summary: string;
+}
+
+export interface SimilarProduct {
+  id: string;
+  name: string;
+  tagline: string;
+  description?: string;
+  url: string;
+  votesCount: number;
+  website?: string;
+  topics?: string[];
+}
+
+export interface MarketResearch {
+  competitors: CompetitorInsight[];
+  similar_products: SimilarProduct[];
+  market_analysis?: string;
+}
+
 export interface AnalysisOutput {
   reality_check: RealityCheck;
   product_thinking_score: ProductThinkingScore;
   improvement_plan: ImprovementPlan;
   final_verdict: FinalVerdict;
+  market_research?: MarketResearch;
 }
 
 export interface Report {
