@@ -52,7 +52,7 @@ export function HeroSection() {
         >
           <motion.div 
             variants={fadeInUp}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-8"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-primary/15 to-accent/20 text-primary text-sm font-medium mb-8 border border-primary/20"
           >
             <Sparkles className="h-4 w-4" />
             AI-Powered Product Analysis
@@ -108,8 +108,7 @@ export function HowItWorks() {
   ];
 
   return (
-    <section className="relative border-t border-border/40">
-      <div className="absolute inset-0 mesh-gradient -z-10" />
+    <section className="relative border-t border-border/40 bg-gradient-to-b from-background to-muted/30">
       <div className="container py-16 md:py-24">
         <motion.h2 
           className="text-2xl font-bold text-center mb-16 md:text-3xl"
@@ -120,34 +119,34 @@ export function HowItWorks() {
           {t('howItWorks')}
         </motion.h2>
         
-        <div className="grid gap-8 md:grid-cols-3">
+        <div className="grid gap-8 md:grid-cols-3 max-w-5xl mx-auto">
           {steps.map((step, index) => (
             <motion.div
               key={index}
-              className="relative"
+              className="relative pt-6"
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: index * 0.15 }}
             >
-              <div className="metal-card p-8 h-full flex flex-col items-center text-center">
-                {/* Step number badge */}
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-8 h-8 rounded-full metal-button text-primary-foreground text-sm font-bold flex items-center justify-center shadow-lg">
-                  {index + 1}
-                </div>
-                
-                {/* Icon container with glow */}
+              {/* Step number badge - positioned above card */}
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 z-10 w-10 h-10 rounded-full metal-button text-primary-foreground text-sm font-bold flex items-center justify-center shadow-lg border-2 border-background">
+                {index + 1}
+              </div>
+              
+              <div className="bg-card border border-border/60 rounded-2xl p-8 pt-10 h-full flex flex-col items-center text-center shadow-sm hover:shadow-md hover:border-primary/30 transition-all duration-300">
+                {/* Icon container with warm glow */}
                 <motion.div 
-                  className="relative w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center mb-6 mt-2"
+                  className="relative w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/15 to-accent/20 flex items-center justify-center mb-6 border border-primary/20"
                   whileHover={{ scale: 1.05 }}
                   transition={{ type: 'spring', stiffness: 300 }}
                 >
-                  <step.icon className="w-8 h-8 text-primary" />
-                  <div className="absolute inset-0 rounded-2xl bg-primary/10 blur-xl -z-10" />
+                  <step.icon className="w-7 h-7 text-primary" />
+                  <div className="absolute inset-0 rounded-2xl bg-primary/5 blur-xl -z-10" />
                 </motion.div>
                 
                 {/* Content */}
-                <h3 className="text-lg font-semibold mb-3">{step.title}</h3>
+                <h3 className="text-lg font-semibold mb-3 text-foreground">{step.title}</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">{step.description}</p>
               </div>
             </motion.div>
