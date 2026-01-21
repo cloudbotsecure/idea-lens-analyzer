@@ -3,115 +3,126 @@
 @tailwind utilities;
 
 /* PM Reality Check Design System
-   Analytical, minimal, serious - no fluff aesthetic
-   Colors in HSL format */
+   Sleek metal gradient aesthetic with analytical precision */
 
 @layer base {
   :root {
-    /* Base palette - Slate/charcoal for analytical feel */
-    --background: 220 14% 96%;
-    --foreground: 222 47% 11%;
+    /* Base palette - Cool steel with depth */
+    --background: 220 20% 97%;
+    --foreground: 220 25% 10%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card: 220 15% 99%;
+    --card-foreground: 220 25% 10%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
+    --popover: 220 15% 99%;
+    --popover-foreground: 220 25% 10%;
 
-    /* Primary - Deep teal for actions */
-    --primary: 173 58% 39%;
+    /* Primary - Electric teal with metallic sheen */
+    --primary: 175 70% 38%;
     --primary-foreground: 0 0% 100%;
 
-    /* Secondary - Cool gray */
-    --secondary: 220 13% 91%;
-    --secondary-foreground: 222 47% 11%;
+    /* Secondary - Brushed silver */
+    --secondary: 220 15% 92%;
+    --secondary-foreground: 220 25% 15%;
 
-    /* Muted - Soft gray for backgrounds */
-    --muted: 220 14% 96%;
-    --muted-foreground: 220 9% 46%;
+    /* Muted - Soft platinum */
+    --muted: 220 18% 94%;
+    --muted-foreground: 220 10% 45%;
 
-    /* Accent - Subtle highlight */
-    --accent: 173 40% 95%;
-    --accent-foreground: 173 58% 30%;
+    /* Accent - Subtle chrome highlight */
+    --accent: 175 50% 95%;
+    --accent-foreground: 175 70% 28%;
 
-    /* Destructive - Warm red for warnings/risks */
-    --destructive: 0 72% 51%;
+    /* Destructive - Oxidized copper red */
+    --destructive: 0 75% 50%;
     --destructive-foreground: 0 0% 100%;
 
     /* Semantic colors */
-    --success: 142 71% 45%;
+    --success: 155 70% 40%;
     --success-foreground: 0 0% 100%;
     
-    --warning: 38 92% 50%;
-    --warning-foreground: 0 0% 0%;
+    --warning: 40 95% 50%;
+    --warning-foreground: 40 100% 10%;
     
-    --score: 38 92% 50%;
-    --score-foreground: 0 0% 0%;
+    --score: 40 95% 50%;
+    --score-foreground: 40 100% 10%;
 
     /* UI elements */
-    --border: 220 13% 87%;
-    --input: 220 13% 91%;
-    --ring: 173 58% 39%;
+    --border: 220 15% 88%;
+    --input: 220 15% 92%;
+    --ring: 175 70% 38%;
 
     --radius: 0.75rem;
 
-    /* Sidebar (not used but required) */
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 173 58% 39%;
+    /* Metal gradient tokens */
+    --metal-light: 220 20% 98%;
+    --metal-mid: 220 15% 88%;
+    --metal-dark: 220 15% 75%;
+    --metal-shine: 220 20% 100%;
+
+    /* Sidebar */
+    --sidebar-background: 220 20% 98%;
+    --sidebar-foreground: 220 25% 15%;
+    --sidebar-primary: 175 70% 38%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 175 40% 95%;
+    --sidebar-accent-foreground: 175 70% 28%;
+    --sidebar-border: 220 15% 88%;
+    --sidebar-ring: 175 70% 38%;
   }
 
   .dark {
-    --background: 222 47% 8%;
-    --foreground: 220 14% 96%;
+    --background: 220 25% 7%;
+    --foreground: 220 15% 95%;
 
-    --card: 222 47% 11%;
-    --card-foreground: 220 14% 96%;
+    --card: 220 25% 10%;
+    --card-foreground: 220 15% 95%;
 
-    --popover: 222 47% 11%;
-    --popover-foreground: 220 14% 96%;
+    --popover: 220 25% 10%;
+    --popover-foreground: 220 15% 95%;
 
-    --primary: 173 58% 45%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 175 65% 50%;
+    --primary-foreground: 220 25% 5%;
 
-    --secondary: 222 30% 18%;
-    --secondary-foreground: 220 14% 96%;
+    --secondary: 220 20% 18%;
+    --secondary-foreground: 220 15% 90%;
 
-    --muted: 222 30% 18%;
-    --muted-foreground: 220 9% 60%;
+    --muted: 220 20% 15%;
+    --muted-foreground: 220 12% 55%;
 
-    --accent: 173 40% 15%;
-    --accent-foreground: 173 58% 65%;
+    --accent: 175 35% 15%;
+    --accent-foreground: 175 60% 65%;
 
-    --destructive: 0 62% 45%;
+    --destructive: 0 60% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --success: 142 71% 45%;
+    --success: 155 65% 45%;
     --success-foreground: 0 0% 100%;
     
-    --warning: 38 92% 50%;
-    --warning-foreground: 0 0% 0%;
+    --warning: 40 90% 55%;
+    --warning-foreground: 40 100% 5%;
     
-    --score: 38 92% 50%;
-    --score-foreground: 0 0% 0%;
+    --score: 40 90% 55%;
+    --score-foreground: 40 100% 5%;
 
-    --border: 222 30% 22%;
-    --input: 222 30% 18%;
-    --ring: 173 58% 45%;
+    --border: 220 20% 20%;
+    --input: 220 20% 15%;
+    --ring: 175 65% 50%;
 
-    --sidebar-background: 222 47% 8%;
-    --sidebar-foreground: 220 14% 96%;
-    --sidebar-primary: 173 58% 45%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 222 30% 15%;
-    --sidebar-accent-foreground: 220 14% 96%;
-    --sidebar-border: 222 30% 22%;
-    --sidebar-ring: 173 58% 45%;
+    /* Metal gradient tokens - dark mode */
+    --metal-light: 220 20% 22%;
+    --metal-mid: 220 18% 16%;
+    --metal-dark: 220 20% 12%;
+    --metal-shine: 220 15% 30%;
+
+    --sidebar-background: 220 25% 8%;
+    --sidebar-foreground: 220 15% 95%;
+    --sidebar-primary: 175 65% 50%;
+    --sidebar-primary-foreground: 220 25% 5%;
+    --sidebar-accent: 175 30% 15%;
+    --sidebar-accent-foreground: 175 60% 65%;
+    --sidebar-border: 220 20% 20%;
+    --sidebar-ring: 175 65% 50%;
   }
 }
 
@@ -131,37 +142,121 @@
 }
 
 @layer components {
-  .glass-card {
-    @apply bg-card/80 backdrop-blur-sm border border-border/50 shadow-lg;
+  /* Metal card with gradient border */
+  .metal-card {
+    @apply relative overflow-hidden rounded-xl;
+    background: linear-gradient(
+      145deg,
+      hsl(var(--card)) 0%,
+      hsl(var(--metal-light)) 50%,
+      hsl(var(--card)) 100%
+    );
+    box-shadow: 
+      0 1px 3px rgba(0,0,0,0.08),
+      0 4px 12px rgba(0,0,0,0.05),
+      inset 0 1px 0 hsl(var(--metal-shine) / 0.5);
   }
 
+  .metal-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(
+      145deg,
+      hsl(var(--metal-shine) / 0.4),
+      hsl(var(--metal-mid) / 0.3),
+      hsl(var(--metal-dark) / 0.2)
+    );
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  /* Glass card with blur */
+  .glass-card {
+    @apply relative overflow-hidden rounded-xl backdrop-blur-md;
+    background: linear-gradient(
+      135deg,
+      hsl(var(--card) / 0.9) 0%,
+      hsl(var(--card) / 0.7) 100%
+    );
+    box-shadow: 
+      0 2px 8px rgba(0,0,0,0.04),
+      0 8px 24px rgba(0,0,0,0.06),
+      inset 0 1px 0 hsl(var(--metal-shine) / 0.3);
+    border: 1px solid hsl(var(--border) / 0.5);
+  }
+
+  /* Metallic button gradient */
+  .metal-button {
+    @apply relative overflow-hidden font-semibold transition-all duration-300;
+    background: linear-gradient(
+      145deg,
+      hsl(var(--primary)) 0%,
+      hsl(175 65% 32%) 50%,
+      hsl(var(--primary)) 100%
+    );
+    box-shadow: 
+      0 2px 8px hsl(var(--primary) / 0.3),
+      inset 0 1px 0 hsl(175 80% 60% / 0.3),
+      inset 0 -1px 0 hsl(175 70% 25% / 0.3);
+  }
+
+  .metal-button:hover {
+    transform: translateY(-1px);
+    box-shadow: 
+      0 4px 16px hsl(var(--primary) / 0.4),
+      inset 0 1px 0 hsl(175 80% 60% / 0.4),
+      inset 0 -1px 0 hsl(175 70% 25% / 0.3);
+  }
+
+  /* Score badge with metallic gold */
   .score-badge {
     @apply inline-flex items-center justify-center px-3 py-1 rounded-full text-sm font-bold;
-    background: hsl(var(--score));
-    color: hsl(var(--score-foreground));
+    background: linear-gradient(
+      145deg,
+      hsl(45 95% 55%) 0%,
+      hsl(40 90% 45%) 50%,
+      hsl(38 85% 50%) 100%
+    );
+    color: hsl(35 100% 10%);
+    box-shadow: 
+      0 2px 6px hsl(40 90% 40% / 0.3),
+      inset 0 1px 0 hsl(50 100% 75% / 0.5);
   }
 
   .verdict-positive {
-    @apply bg-success/10 text-success border-success/20;
+    @apply bg-success/10 text-success border-success/30;
+    box-shadow: inset 0 1px 0 hsl(var(--success) / 0.1);
   }
 
   .verdict-negative {
-    @apply bg-destructive/10 text-destructive border-destructive/20;
+    @apply bg-destructive/10 text-destructive border-destructive/30;
+    box-shadow: inset 0 1px 0 hsl(var(--destructive) / 0.1);
   }
   
-  .fade-in {
-    animation: fadeIn 0.5s ease-out;
+  /* Hero gradient background */
+  .hero-gradient {
+    background: 
+      radial-gradient(ellipse 80% 50% at 50% -20%, hsl(var(--primary) / 0.15), transparent),
+      radial-gradient(ellipse 60% 40% at 80% 50%, hsl(175 60% 60% / 0.08), transparent),
+      radial-gradient(ellipse 50% 30% at 20% 80%, hsl(220 30% 50% / 0.05), transparent),
+      linear-gradient(to bottom, hsl(var(--background)), hsl(var(--muted) / 0.3));
   }
-  
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-      transform: translateY(10px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
+
+  /* Animated mesh gradient */
+  .mesh-gradient {
+    background: 
+      radial-gradient(at 40% 20%, hsl(175 70% 50% / 0.1) 0px, transparent 50%),
+      radial-gradient(at 80% 0%, hsl(220 30% 70% / 0.1) 0px, transparent 50%),
+      radial-gradient(at 0% 50%, hsl(175 50% 60% / 0.08) 0px, transparent 50%),
+      radial-gradient(at 80% 50%, hsl(220 25% 80% / 0.08) 0px, transparent 50%),
+      radial-gradient(at 0% 100%, hsl(175 60% 50% / 0.1) 0px, transparent 50%),
+      hsl(var(--background));
   }
 
   .loading-pulse {
@@ -174,6 +269,27 @@
     }
     50% {
       opacity: 0.5;
+    }
+  }
+
+  /* Shimmer effect for loading states */
+  .shimmer {
+    background: linear-gradient(
+      90deg,
+      hsl(var(--muted)) 0%,
+      hsl(var(--metal-shine)) 50%,
+      hsl(var(--muted)) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+
+  @keyframes shimmer {
+    0% {
+      background-position: 200% 0;
+    }
+    100% {
+      background-position: -200% 0;
     }
   }
 }
