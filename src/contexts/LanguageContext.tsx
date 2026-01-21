@@ -9,8 +9,14 @@ interface LanguageContextType {
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
+function getDefaultLanguage(): Language {
+  const browserLang = navigator.language || (navigator as any).userLanguage || 'en';
+  // If browser language starts with 'en', use English; otherwise default to Ukrainian
+  return browserLang.toLowerCase().startsWith('en') ? 'en' : 'uk';
+}
+
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [language, setLanguage] = useState<Language>('en');
+  const [language, setLanguage] = useState<Language>(getDefaultLanguage);
 
   const translate = (key: TranslationKey) => t(key, language);
 
