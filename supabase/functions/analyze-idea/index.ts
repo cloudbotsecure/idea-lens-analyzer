@@ -23,7 +23,18 @@ interface SimilarProduct {
   topics?: string[];
 }
 
-async function searchCompetitors(productIdea: string, problem: string): Promise<CompetitorInsight[]> {
+function extractKeywords(text: string): string[] {
+  // Extract meaningful words (4+ chars), remove common stop words
+  const stopWords = new Set(['with', 'that', 'this', 'from', 'have', 'will', 'been', 'were', 'they', 'their', 'what', 'when', 'where', 'which', 'while', 'about', 'after', 'before', 'between', 'through', 'during', 'without', 'again', 'further', 'then', 'once', 'here', 'there', 'each', 'other', 'some', 'such', 'more', 'most', 'very', 'just', 'also', 'only', 'into', 'over', 'could', 'would', 'should', 'using', 'based', 'across', 'powered', 'users', 'teams', 'tools', 'platform', 'solution', 'product', 'application']);
+  
+  return text.toLowerCase()
+    .replace(/[^a-z0-9\s]/gi, ' ')
+    .split(/\s+/)
+    .filter(word => word.length >= 4 && !stopWords.has(word))
+    .slice(0, 6);
+}
+
+async function searchCompetitors(productIdea: string, problem: string, targetUser: string): Promise<CompetitorInsight[]> {
   const apiKey = Deno.env.get("FIRECRAWL_API_KEY");
   if (!apiKey) {
     console.log("Firecrawl not configured, skipping competitor search");
@@ -31,9 +42,17 @@ async function searchCompetitors(productIdea: string, problem: string): Promise<
   }
 
   try {
-    // Extract key terms from the product idea for better search
-    const searchQuery = `"${productIdea}" OR "${problem}" site:producthunt.com OR site:g2.com OR site:capterra.com`;
-    console.log("Searching competitors with query:", searchQuery);
+    // Extract key terms and build a simple, effective search query
+    const ideaKeywords = extractKeywords(productIdea);
+    const problemKeywords = extractKeywords(problem);
+    const targetKeywords = extractKeywords(targetUser);
+    
+    // Combine most relevant keywords
+    const allKeywords = [...new Set([...ideaKeywords.slice(0, 3), ...problemKeywords.slice(0, 2), ...targetKeywords.slice(0, 1)])];
+    const searchQuery = `${allKeywords.join(' ')} software alternatives competitors`;
+    
+    console.log("Firecrawl search keywords:", allKeywords);
+    console.log("Firecrawl search query:", searchQuery);
     
     const response = await fetch('https://api.firecrawl.dev/v1/search', {
       method: 'POST',
@@ -43,7 +62,7 @@ async function searchCompetitors(productIdea: string, problem: string): Promise<
       },
       body: JSON.stringify({
         query: searchQuery,
-        limit: 5,
+        limit: 8,
         scrapeOptions: {
           formats: ['markdown'],
           onlyMainContent: true,
@@ -52,7 +71,8 @@ async function searchCompetitors(productIdea: string, problem: string): Promise<
     });
 
     if (!response.ok) {
-      console.error("Firecrawl search failed:", response.status);
+      const errorText = await response.text();
+      console.error("Firecrawl search failed:", response.status, errorText);
       return [];
     }
 
@@ -61,18 +81,29 @@ async function searchCompetitors(productIdea: string, problem: string): Promise<
     
     console.log("Firecrawl found", results.length, "results");
     
-    return results.slice(0, 5).map((result: any) => ({
-      name: result.title || result.url,
-      url: result.url,
-      summary: result.description || result.markdown?.slice(0, 200) || "No description available",
-    }));
+    // Filter for software/product related pages
+    return results
+      .filter((result: any) => {
+        const url = (result.url || '').toLowerCase();
+        const title = (result.title || '').toLowerCase();
+        // Prioritize relevant sites
+        return url.includes('producthunt') || url.includes('g2.com') || url.includes('capterra') || 
+               url.includes('alternativeto') || url.includes('saasworthy') ||
+               title.includes('alternative') || title.includes('competitor') || title.includes('vs');
+      })
+      .slice(0, 5)
+      .map((result: any) => ({
+        name: result.title || result.url,
+        url: result.url,
+        summary: result.description || result.markdown?.slice(0, 300) || "No description available",
+      }));
   } catch (error) {
     console.error("Competitor search error:", error);
     return [];
   }
 }
 
-async function searchProductHunt(productIdea: string, targetUser: string): Promise<SimilarProduct[]> {
+async function searchProductHunt(productIdea: string, targetUser: string, problem: string): Promise<SimilarProduct[]> {
   const apiKey = Deno.env.get("PRODUCT_HUNT_API_KEY");
   const apiSecret = Deno.env.get("PRODUCT_HUNT_API_SECRET");
   
@@ -82,7 +113,11 @@ async function searchProductHunt(productIdea: string, targetUser: string): Promi
   }
 
   try {
-    console.log("Searching Product Hunt for:", productIdea);
+    // Extract 2-3 core keywords for search
+    const ideaKeywords = extractKeywords(productIdea);
+    const searchTerm = ideaKeywords.slice(0, 2).join(' ');
+    
+    console.log("Product Hunt search term:", searchTerm);
     
     // Get access token
     const tokenResponse = await fetch('https://api.producthunt.com/v2/oauth/token', {
@@ -96,19 +131,75 @@ async function searchProductHunt(productIdea: string, targetUser: string): Promi
     });
 
     if (!tokenResponse.ok) {
-      console.error("Product Hunt token error");
+      console.error("Product Hunt token error:", await tokenResponse.text());
       return [];
     }
 
     const { access_token } = await tokenResponse.json();
     
-    // Extract keywords from product idea for search
-    const keywords = productIdea.split(/\s+/).slice(0, 3).join(" ");
+    // Search for topics first to find relevant category
+    const topicQuery = `
+      query SearchTopics($query: String!) {
+        topics(query: $query, first: 3) {
+          edges {
+            node {
+              id
+              name
+              slug
+            }
+          }
+        }
+      }
+    `;
     
-    // Use the posts query with a search term
-    const graphqlQuery = `
-      query SearchProducts($query: String!) {
-        posts(first: 10, order: VOTES, postedAfter: "2023-01-01T00:00:00Z") {
+    const topicResponse = await fetch('https://api.producthunt.com/v2/api/graphql', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${access_token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ query: topicQuery, variables: { query: searchTerm } }),
+    });
+    
+    let topicSlug = null;
+    if (topicResponse.ok) {
+      const topicData = await topicResponse.json();
+      const topics = topicData.data?.topics?.edges || [];
+      if (topics.length > 0) {
+        topicSlug = topics[0].node.slug;
+        console.log("Found topic:", topicSlug);
+      }
+    }
+    
+    // Get posts from the topic or recent posts with search filtering
+    const postsQuery = topicSlug ? `
+      query GetTopicPosts($slug: String!) {
+        topic(slug: $slug) {
+          posts(first: 20, order: VOTES) {
+            edges {
+              node {
+                id
+                name
+                tagline
+                description
+                url
+                votesCount
+                website
+                topics {
+                  edges {
+                    node {
+                      name
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    ` : `
+      query GetRecentPosts {
+        posts(first: 30, order: VOTES, postedAfter: "2024-01-01T00:00:00Z") {
           edges {
             node {
               id
@@ -131,49 +222,68 @@ async function searchProductHunt(productIdea: string, targetUser: string): Promi
       }
     `;
 
-    const searchResponse = await fetch('https://api.producthunt.com/v2/api/graphql', {
+    const postsResponse = await fetch('https://api.producthunt.com/v2/api/graphql', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${access_token}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ query: graphqlQuery }),
+      body: JSON.stringify({ 
+        query: postsQuery, 
+        variables: topicSlug ? { slug: topicSlug } : {} 
+      }),
     });
 
-    if (!searchResponse.ok) {
-      console.error("Product Hunt search failed");
+    if (!postsResponse.ok) {
+      console.error("Product Hunt posts query failed:", await postsResponse.text());
       return [];
     }
 
-    const searchData = await searchResponse.json();
-    const allProducts = searchData.data?.posts?.edges?.map((edge: any) => ({
+    const postsData = await postsResponse.json();
+    const postsEdges = topicSlug 
+      ? postsData.data?.topic?.posts?.edges 
+      : postsData.data?.posts?.edges;
+    
+    const allProducts = (postsEdges || []).map((edge: any) => ({
       ...edge.node,
       topics: edge.node.topics?.edges?.map((t: any) => t.node.name) || [],
-    })) || [];
+    }));
     
-    // Filter products that are relevant to the idea
-    const ideaLower = productIdea.toLowerCase();
-    const targetLower = targetUser.toLowerCase();
-    const relevantProducts = allProducts.filter((product: any) => {
-      const name = (product.name || '').toLowerCase();
-      const tagline = (product.tagline || '').toLowerCase();
-      const description = (product.description || '').toLowerCase();
-      const topics = (product.topics || []).map((t: string) => t.toLowerCase());
+    console.log("Product Hunt returned", allProducts.length, "products");
+    
+    // Filter for relevance using keywords from idea, target user, and problem
+    const allKeywords = [...extractKeywords(productIdea), ...extractKeywords(targetUser), ...extractKeywords(problem)];
+    
+    const scoredProducts = allProducts.map((product: any) => {
+      const searchableText = `${product.name} ${product.tagline} ${product.description || ''} ${(product.topics || []).join(' ')}`.toLowerCase();
       
-      // Check if any keyword from the idea matches the product
-      const ideaWords = ideaLower.split(/\s+/).filter((w: string) => w.length > 3);
-      const targetWords = targetLower.split(/\s+/).filter((w: string) => w.length > 3);
+      let score = 0;
+      allKeywords.forEach((keyword: string) => {
+        if (searchableText.includes(keyword)) {
+          score += 1;
+        }
+      });
       
-      return ideaWords.some((word: string) => 
-        name.includes(word) || tagline.includes(word) || description.includes(word) ||
-        topics.some((topic: string) => topic.includes(word))
-      ) || targetWords.some((word: string) =>
-        name.includes(word) || tagline.includes(word) || description.includes(word)
-      );
+      return { ...product, relevanceScore: score };
     });
     
-    console.log("Found", relevantProducts.length, "relevant products from", allProducts.length, "total");
-    return relevantProducts.slice(0, 5);
+    const relevantProducts = scoredProducts
+      .filter((p: any) => p.relevanceScore >= 1)
+      .sort((a: any, b: any) => b.relevanceScore - a.relevanceScore || b.votesCount - a.votesCount)
+      .slice(0, 5);
+    
+    console.log("Found", relevantProducts.length, "relevant products");
+    
+    return relevantProducts.map((p: any) => ({
+      id: p.id,
+      name: p.name,
+      tagline: p.tagline,
+      description: p.description,
+      url: p.url,
+      votesCount: p.votesCount,
+      website: p.website,
+      topics: p.topics,
+    }));
   } catch (error) {
     console.error("Product Hunt error:", error);
     return [];
@@ -194,8 +304,8 @@ serve(async (req) => {
     // Fetch external data in parallel using product idea AND problem for better relevance
     console.log("Fetching market research data for:", productIdea);
     const [competitors, similarProducts] = await Promise.all([
-      searchCompetitors(productIdea, problem),
-      searchProductHunt(productIdea, targetUser),
+      searchCompetitors(productIdea, problem, targetUser),
+      searchProductHunt(productIdea, targetUser, problem),
     ]);
     
     console.log(`Found ${competitors.length} competitors, ${similarProducts.length} similar products`);
