@@ -23,36 +23,82 @@ interface SimilarProduct {
   topics?: string[];
 }
 
-function extractKeywords(text: string): string[] {
-  // Extract meaningful words (4+ chars), remove common stop words
-  const stopWords = new Set(['with', 'that', 'this', 'from', 'have', 'will', 'been', 'were', 'they', 'their', 'what', 'when', 'where', 'which', 'while', 'about', 'after', 'before', 'between', 'through', 'during', 'without', 'again', 'further', 'then', 'once', 'here', 'there', 'each', 'other', 'some', 'such', 'more', 'most', 'very', 'just', 'also', 'only', 'into', 'over', 'could', 'would', 'should', 'using', 'based', 'across', 'powered', 'users', 'teams', 'tools', 'platform', 'solution', 'product', 'application']);
-  
-  return text.toLowerCase()
-    .replace(/[^a-z0-9\s]/gi, ' ')
-    .split(/\s+/)
-    .filter(word => word.length >= 4 && !stopWords.has(word))
-    .slice(0, 6);
+async function generateSearchQueries(productIdea: string, problem: string, targetUser: string): Promise<{ firecrawlQuery: string; productHuntQuery: string; keywords: string[] }> {
+  const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+  if (!LOVABLE_API_KEY) {
+    console.error("LOVABLE_API_KEY not available for search query generation");
+    return { firecrawlQuery: "", productHuntQuery: "", keywords: [] };
+  }
+
+  try {
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash-lite",
+        messages: [
+          {
+            role: "system",
+            content: `You are a search query optimizer. Given a product idea (in any language), generate effective ENGLISH search queries to find competitors and similar products.
+
+Return JSON only:
+{
+  "firecrawlQuery": "search query for finding competitor software on G2, Capterra, AlternativeTo (e.g. 'AI startup idea generator alternatives')",
+  "productHuntQuery": "1-3 word topic for Product Hunt (e.g. 'startup tools' or 'AI productivity')",
+  "keywords": ["keyword1", "keyword2", "keyword3"] // 3-5 English keywords describing the product category
 }
 
-async function searchCompetitors(productIdea: string, problem: string, targetUser: string): Promise<CompetitorInsight[]> {
+Be specific to the product domain. For example:
+- "AI service that generates startup ideas" → firecrawlQuery: "AI startup idea generator alternatives", productHuntQuery: "startup ideas", keywords: ["startup", "idea", "generator", "AI", "entrepreneur"]
+- "Task management app for teams" → firecrawlQuery: "team task management software alternatives", productHuntQuery: "task management", keywords: ["task", "project", "team", "management"]
+
+Return ONLY valid JSON.`
+          },
+          {
+            role: "user",
+            content: `Product Idea: ${productIdea}\nProblem: ${problem}\nTarget User: ${targetUser}`
+          }
+        ],
+      }),
+    });
+
+    if (!response.ok) {
+      console.error("Search query generation failed:", await response.text());
+      return { firecrawlQuery: "", productHuntQuery: "", keywords: [] };
+    }
+
+    const result = await response.json();
+    const content = result.choices?.[0]?.message?.content || "";
+    
+    const jsonMatch = content.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      const parsed = JSON.parse(jsonMatch[0]);
+      console.log("Generated search queries:", parsed);
+      return {
+        firecrawlQuery: parsed.firecrawlQuery || "",
+        productHuntQuery: parsed.productHuntQuery || "",
+        keywords: parsed.keywords || [],
+      };
+    }
+  } catch (error) {
+    console.error("Search query generation error:", error);
+  }
+  
+  return { firecrawlQuery: "", productHuntQuery: "", keywords: [] };
+}
+
+async function searchCompetitors(firecrawlQuery: string): Promise<CompetitorInsight[]> {
   const apiKey = Deno.env.get("FIRECRAWL_API_KEY");
-  if (!apiKey) {
-    console.log("Firecrawl not configured, skipping competitor search");
+  if (!apiKey || !firecrawlQuery) {
+    console.log("Firecrawl not configured or no query, skipping competitor search");
     return [];
   }
 
   try {
-    // Extract key terms and build a simple, effective search query
-    const ideaKeywords = extractKeywords(productIdea);
-    const problemKeywords = extractKeywords(problem);
-    const targetKeywords = extractKeywords(targetUser);
-    
-    // Combine most relevant keywords
-    const allKeywords = [...new Set([...ideaKeywords.slice(0, 3), ...problemKeywords.slice(0, 2), ...targetKeywords.slice(0, 1)])];
-    const searchQuery = `${allKeywords.join(' ')} software alternatives competitors`;
-    
-    console.log("Firecrawl search keywords:", allKeywords);
-    console.log("Firecrawl search query:", searchQuery);
+    console.log("Firecrawl search query:", firecrawlQuery);
     
     const response = await fetch('https://api.firecrawl.dev/v1/search', {
       method: 'POST',
@@ -61,8 +107,8 @@ async function searchCompetitors(productIdea: string, problem: string, targetUse
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        query: searchQuery,
-        limit: 8,
+        query: firecrawlQuery,
+        limit: 10,
         scrapeOptions: {
           formats: ['markdown'],
           onlyMainContent: true,
@@ -81,15 +127,18 @@ async function searchCompetitors(productIdea: string, problem: string, targetUse
     
     console.log("Firecrawl found", results.length, "results");
     
-    // Filter for software/product related pages
+    // Filter for software/product related pages and prioritize quality sources
     return results
       .filter((result: any) => {
         const url = (result.url || '').toLowerCase();
         const title = (result.title || '').toLowerCase();
         // Prioritize relevant sites
-        return url.includes('producthunt') || url.includes('g2.com') || url.includes('capterra') || 
-               url.includes('alternativeto') || url.includes('saasworthy') ||
-               title.includes('alternative') || title.includes('competitor') || title.includes('vs');
+        const isRelevantSite = url.includes('producthunt') || url.includes('g2.com') || url.includes('capterra') || 
+               url.includes('alternativeto') || url.includes('saasworthy') || url.includes('getapp') ||
+               url.includes('softwareadvice') || url.includes('trustradius');
+        const hasRelevantTitle = title.includes('alternative') || title.includes('competitor') || 
+               title.includes('vs') || title.includes('best') || title.includes('top');
+        return isRelevantSite || hasRelevantTitle;
       })
       .slice(0, 5)
       .map((result: any) => ({
@@ -103,21 +152,18 @@ async function searchCompetitors(productIdea: string, problem: string, targetUse
   }
 }
 
-async function searchProductHunt(productIdea: string, targetUser: string, problem: string): Promise<SimilarProduct[]> {
+async function searchProductHunt(productHuntQuery: string, keywords: string[]): Promise<SimilarProduct[]> {
   const apiKey = Deno.env.get("PRODUCT_HUNT_API_KEY");
   const apiSecret = Deno.env.get("PRODUCT_HUNT_API_SECRET");
   
-  if (!apiKey || !apiSecret) {
-    console.log("Product Hunt not configured, skipping");
+  if (!apiKey || !apiSecret || !productHuntQuery) {
+    console.log("Product Hunt not configured or no query, skipping");
     return [];
   }
 
   try {
-    // Extract 2-3 core keywords for search
-    const ideaKeywords = extractKeywords(productIdea);
-    const searchTerm = ideaKeywords.slice(0, 2).join(' ');
-    
-    console.log("Product Hunt search term:", searchTerm);
+    console.log("Product Hunt search query:", productHuntQuery);
+    console.log("Product Hunt keywords for filtering:", keywords);
     
     // Get access token
     const tokenResponse = await fetch('https://api.producthunt.com/v2/oauth/token', {
@@ -140,7 +186,7 @@ async function searchProductHunt(productIdea: string, targetUser: string, proble
     // Search for topics first to find relevant category
     const topicQuery = `
       query SearchTopics($query: String!) {
-        topics(query: $query, first: 3) {
+        topics(query: $query, first: 5) {
           edges {
             node {
               id
@@ -158,111 +204,94 @@ async function searchProductHunt(productIdea: string, targetUser: string, proble
         'Authorization': `Bearer ${access_token}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ query: topicQuery, variables: { query: searchTerm } }),
+      body: JSON.stringify({ query: topicQuery, variables: { query: productHuntQuery } }),
     });
     
-    let topicSlug = null;
+    const topicSlugs: string[] = [];
     if (topicResponse.ok) {
       const topicData = await topicResponse.json();
       const topics = topicData.data?.topics?.edges || [];
-      if (topics.length > 0) {
-        topicSlug = topics[0].node.slug;
-        console.log("Found topic:", topicSlug);
-      }
+      topics.forEach((t: any) => {
+        if (t.node?.slug) {
+          topicSlugs.push(t.node.slug);
+        }
+      });
+      console.log("Found topics:", topicSlugs);
     }
     
-    // Get posts from the topic or recent posts with search filtering
-    const postsQuery = topicSlug ? `
-      query GetTopicPosts($slug: String!) {
-        topic(slug: $slug) {
-          posts(first: 20, order: VOTES) {
-            edges {
-              node {
-                id
-                name
-                tagline
-                description
-                url
-                votesCount
-                website
-                topics {
-                  edges {
-                    node {
-                      name
+    let allProducts: any[] = [];
+    
+    // Get posts from each relevant topic
+    if (topicSlugs.length > 0) {
+      for (const slug of topicSlugs.slice(0, 2)) { // Check first 2 topics
+        const postsQuery = `
+          query GetTopicPosts($slug: String!) {
+            topic(slug: $slug) {
+              posts(first: 15, order: VOTES) {
+                edges {
+                  node {
+                    id
+                    name
+                    tagline
+                    description
+                    url
+                    votesCount
+                    website
+                    topics {
+                      edges {
+                        node {
+                          name
+                        }
+                      }
                     }
                   }
                 }
               }
             }
           }
-        }
-      }
-    ` : `
-      query GetRecentPosts {
-        posts(first: 30, order: VOTES, postedAfter: "2024-01-01T00:00:00Z") {
-          edges {
-            node {
-              id
-              name
-              tagline
-              description
-              url
-              votesCount
-              website
-              topics {
-                edges {
-                  node {
-                    name
-                  }
-                }
-              }
+        `;
+
+        const postsResponse = await fetch('https://api.producthunt.com/v2/api/graphql', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${access_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ query: postsQuery, variables: { slug } }),
+        });
+
+        if (postsResponse.ok) {
+          const postsData = await postsResponse.json();
+          const edges = postsData.data?.topic?.posts?.edges || [];
+          edges.forEach((edge: any) => {
+            const node = edge.node;
+            if (node && !allProducts.find(p => p.id === node.id)) {
+              allProducts.push({
+                ...node,
+                topics: node.topics?.edges?.map((t: any) => t.node.name) || [],
+              });
             }
-          }
+          });
         }
       }
-    `;
-
-    const postsResponse = await fetch('https://api.producthunt.com/v2/api/graphql', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${access_token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ 
-        query: postsQuery, 
-        variables: topicSlug ? { slug: topicSlug } : {} 
-      }),
-    });
-
-    if (!postsResponse.ok) {
-      console.error("Product Hunt posts query failed:", await postsResponse.text());
-      return [];
     }
-
-    const postsData = await postsResponse.json();
-    const postsEdges = topicSlug 
-      ? postsData.data?.topic?.posts?.edges 
-      : postsData.data?.posts?.edges;
-    
-    const allProducts = (postsEdges || []).map((edge: any) => ({
-      ...edge.node,
-      topics: edge.node.topics?.edges?.map((t: any) => t.node.name) || [],
-    }));
     
     console.log("Product Hunt returned", allProducts.length, "products");
     
-    // Filter for relevance using keywords from idea, target user, and problem
-    const allKeywords = [...extractKeywords(productIdea), ...extractKeywords(targetUser), ...extractKeywords(problem)];
-    
+    // Score products by keyword relevance
     const scoredProducts = allProducts.map((product: any) => {
       const searchableText = `${product.name} ${product.tagline} ${product.description || ''} ${(product.topics || []).join(' ')}`.toLowerCase();
       
       let score = 0;
-      allKeywords.forEach((keyword: string) => {
-        if (searchableText.includes(keyword)) {
+      keywords.forEach((keyword: string) => {
+        if (searchableText.includes(keyword.toLowerCase())) {
           score += 1;
         }
       });
+      
+      // Boost score for products with high votes (proven market interest)
+      if (product.votesCount > 500) score += 1;
+      if (product.votesCount > 1000) score += 1;
       
       return { ...product, relevanceScore: score };
     });
@@ -301,11 +330,15 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    // Fetch external data in parallel using product idea AND problem for better relevance
-    console.log("Fetching market research data for:", productIdea);
+    // First, generate search queries using AI (handles any language)
+    console.log("Generating search queries for:", productIdea);
+    const searchQueries = await generateSearchQueries(productIdea, problem, targetUser);
+    console.log("Search queries generated:", searchQueries);
+    
+    // Fetch external data in parallel
     const [competitors, similarProducts] = await Promise.all([
-      searchCompetitors(productIdea, problem, targetUser),
-      searchProductHunt(productIdea, targetUser, problem),
+      searchCompetitors(searchQueries.firecrawlQuery),
+      searchProductHunt(searchQueries.productHuntQuery, searchQueries.keywords),
     ]);
     
     console.log(`Found ${competitors.length} competitors, ${similarProducts.length} similar products`);
