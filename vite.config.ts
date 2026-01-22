@@ -6,12 +6,15 @@ import { componentTagger } from "lovable-tagger";
 export default defineConfig(({ mode }) => ({
   base: "/idea-lens-analyzer/",
 
+  plugins: [
+    react(),
+    mode === "development" && componentTagger(),
+  ].filter(Boolean),
+
   server: {
     host: "::",
     port: 8080,
   },
-
-  plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
 
   resolve: {
     alias: {
