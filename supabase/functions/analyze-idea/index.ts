@@ -23,7 +23,7 @@ interface SimilarProduct {
   topics?: string[];
 }
 
-async function searchCompetitors(productIdea: string): Promise<CompetitorInsight[]> {
+async function searchCompetitors(productIdea: string, problem: string): Promise<CompetitorInsight[]> {
   const apiKey = Deno.env.get("FIRECRAWL_API_KEY");
   if (!apiKey) {
     console.log("Firecrawl not configured, skipping competitor search");
@@ -31,7 +31,10 @@ async function searchCompetitors(productIdea: string): Promise<CompetitorInsight
   }
 
   try {
-    console.log("Searching competitors for:", productIdea);
+    // Extract key terms from the product idea for better search
+    const searchQuery = `"${productIdea}" OR "${problem}" site:producthunt.com OR site:g2.com OR site:capterra.com`;
+    console.log("Searching competitors with query:", searchQuery);
+    
     const response = await fetch('https://api.firecrawl.dev/v1/search', {
       method: 'POST',
       headers: {
@@ -39,7 +42,7 @@ async function searchCompetitors(productIdea: string): Promise<CompetitorInsight
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        query: `${productIdea} competitors alternatives`,
+        query: searchQuery,
         limit: 5,
         scrapeOptions: {
           formats: ['markdown'],
@@ -56,6 +59,8 @@ async function searchCompetitors(productIdea: string): Promise<CompetitorInsight
     const data = await response.json();
     const results = data.data || [];
     
+    console.log("Firecrawl found", results.length, "results");
+    
     return results.slice(0, 5).map((result: any) => ({
       name: result.title || result.url,
       url: result.url,
@@ -67,7 +72,7 @@ async function searchCompetitors(productIdea: string): Promise<CompetitorInsight
   }
 }
 
-async function searchProductHunt(productIdea: string): Promise<SimilarProduct[]> {
+async function searchProductHunt(productIdea: string, targetUser: string): Promise<SimilarProduct[]> {
   const apiKey = Deno.env.get("PRODUCT_HUNT_API_KEY");
   const apiSecret = Deno.env.get("PRODUCT_HUNT_API_SECRET");
   
@@ -97,10 +102,13 @@ async function searchProductHunt(productIdea: string): Promise<SimilarProduct[]>
 
     const { access_token } = await tokenResponse.json();
     
-    // Search for products using a simpler query
+    // Extract keywords from product idea for search
+    const keywords = productIdea.split(/\s+/).slice(0, 3).join(" ");
+    
+    // Use the posts query with a search term
     const graphqlQuery = `
-      query {
-        posts(first: 5, order: RANKING) {
+      query SearchProducts($query: String!) {
+        posts(first: 10, order: VOTES, postedAfter: "2023-01-01T00:00:00Z") {
           edges {
             node {
               id
@@ -110,6 +118,13 @@ async function searchProductHunt(productIdea: string): Promise<SimilarProduct[]>
               url
               votesCount
               website
+              topics {
+                edges {
+                  node {
+                    name
+                  }
+                }
+              }
             }
           }
         }
@@ -131,10 +146,34 @@ async function searchProductHunt(productIdea: string): Promise<SimilarProduct[]>
     }
 
     const searchData = await searchResponse.json();
-    const products = searchData.data?.posts?.edges?.map((edge: any) => edge.node) || [];
+    const allProducts = searchData.data?.posts?.edges?.map((edge: any) => ({
+      ...edge.node,
+      topics: edge.node.topics?.edges?.map((t: any) => t.node.name) || [],
+    })) || [];
     
-    console.log("Found", products.length, "products from Product Hunt");
-    return products;
+    // Filter products that are relevant to the idea
+    const ideaLower = productIdea.toLowerCase();
+    const targetLower = targetUser.toLowerCase();
+    const relevantProducts = allProducts.filter((product: any) => {
+      const name = (product.name || '').toLowerCase();
+      const tagline = (product.tagline || '').toLowerCase();
+      const description = (product.description || '').toLowerCase();
+      const topics = (product.topics || []).map((t: string) => t.toLowerCase());
+      
+      // Check if any keyword from the idea matches the product
+      const ideaWords = ideaLower.split(/\s+/).filter((w: string) => w.length > 3);
+      const targetWords = targetLower.split(/\s+/).filter((w: string) => w.length > 3);
+      
+      return ideaWords.some((word: string) => 
+        name.includes(word) || tagline.includes(word) || description.includes(word) ||
+        topics.some((topic: string) => topic.includes(word))
+      ) || targetWords.some((word: string) =>
+        name.includes(word) || tagline.includes(word) || description.includes(word)
+      );
+    });
+    
+    console.log("Found", relevantProducts.length, "relevant products from", allProducts.length, "total");
+    return relevantProducts.slice(0, 5);
   } catch (error) {
     console.error("Product Hunt error:", error);
     return [];
@@ -152,11 +191,11 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    // Fetch external data in parallel
-    console.log("Fetching market research data...");
+    // Fetch external data in parallel using product idea AND problem for better relevance
+    console.log("Fetching market research data for:", productIdea);
     const [competitors, similarProducts] = await Promise.all([
-      searchCompetitors(productIdea),
-      searchProductHunt(productIdea),
+      searchCompetitors(productIdea, problem),
+      searchProductHunt(productIdea, targetUser),
     ]);
     
     console.log(`Found ${competitors.length} competitors, ${similarProducts.length} similar products`);
