@@ -17,7 +17,7 @@ const App = () => (
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <BrowserRouter basename="/idea-lens-analyzer">
+        <BrowserRouter basename="/">
   <Routes>
     <Route path="/" element={<Index />} />
     <Route path="/analyze" element={<Analyze />} />
