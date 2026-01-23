@@ -17,15 +17,14 @@ const App = () => (
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/analyze" element={<Analyze />} />
-            <Route path="/r/:id" element={<SharedReport />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
+        <BrowserRouter basename="/idea-lens-analyzer">
+  <Routes>
+    <Route path="/" element={<Index />} />
+    <Route path="/analyze" element={<Analyze />} />
+    <Route path="/r/:id" element={<SharedReport />} />
+    <Route path="*" element={<NotFound />} />
+  </Routes>
+</BrowserRouter>
       </TooltipProvider>
     </LanguageProvider>
   </QueryClientProvider>
