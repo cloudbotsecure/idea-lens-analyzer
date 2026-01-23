@@ -4,7 +4,7 @@ import path from "path";
 import { componentTagger } from "lovable-tagger";
 
 export default defineConfig(({ mode }) => ({
-  base: "/idea-lens-analyzer/",
+  base: "/",
 
   plugins: [
     react(),
